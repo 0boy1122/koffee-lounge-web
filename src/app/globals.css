@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  --color-cream: #fff6e5;
+  --color-cream-soft: #fbeed4;
+  --color-espresso: #3b1911;
+  --color-espresso-deep: #2a0f09;
+  --color-amber: #e49638;
+  --color-amber-dark: #c97d22;
+  --color-white: #ffffff;
+  --color-ink-soft: #6b4a3a;
+}
+
+@theme inline {
+  --color-cream: var(--color-cream);
+  --color-cream-soft: var(--color-cream-soft);
+  --color-espresso: var(--color-espresso);
+  --color-espresso-deep: var(--color-espresso-deep);
+  --color-amber: var(--color-amber);
+  --color-amber-dark: var(--color-amber-dark);
+  --color-white: var(--color-white);
+  --color-ink-soft: var(--color-ink-soft);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-script: var(--font-script);
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-espresso);
+}
+
+/* Torn paper edge, used wherever a cream section meets an espresso section */
+.torn-edge-down {
+  height: 26px;
+  width: 100%;
+  background:
+    linear-gradient(-38deg, var(--color-cream) 13px, transparent 0) 0 13px,
+    linear-gradient(38deg, var(--color-cream) 13px, transparent 0) 0 13px;
+  background-repeat: repeat-x;
+  background-size: 26px 26px, 22px 22px;
+  background-position: 0 13px, 11px 13px;
+  background-color: var(--color-espresso);
+}
+
+.torn-edge-up {
+  height: 26px;
+  width: 100%;
+  background:
+    linear-gradient(142deg, var(--color-espresso) 13px, transparent 0) 0 0,
+    linear-gradient(-142deg, var(--color-espresso) 13px, transparent 0) 0 0;
+  background-repeat: repeat-x;
+  background-size: 26px 26px, 22px 22px;
+  background-position: 0 0, 11px 0;
+  background-color: var(--color-cream);
+}
+
+.pill-tab {
+  transform: rotate(var(--tilt, -3deg));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .float-sway {
+    animation: float-sway 5s ease-in-out infinite;
+  }
+}
+
+@keyframes float-sway {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--tilt, 0deg));
+  }
+  50% {
+    transform: translateY(-8px) rotate(var(--tilt, 0deg));
+  }
+}
