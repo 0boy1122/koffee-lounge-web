@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { AppImage as Image } from "@/components/AppImage";
 import Link from "next/link";
 import { ArrowButton } from "@/components/ArrowButton";
 import { AddToCartButton } from "@/components/AddToCartButton";

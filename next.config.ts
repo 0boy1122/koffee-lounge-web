@@ -1,12 +1,11 @@
 import type { NextConfig } from "next";
-
-const repoName = "koffee-lounge-web";
+import { BASE_PATH } from "./src/lib/base-path";
 
 const nextConfig: NextConfig = {
   output: "export",
   trailingSlash: true,
-  basePath: `/${repoName}`,
-  assetPrefix: `/${repoName}/`,
+  basePath: BASE_PATH,
+  assetPrefix: `${BASE_PATH}/`,
   images: {
     unoptimized: true,
   },

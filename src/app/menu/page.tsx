@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
+import { AppImage as Image } from "@/components/AppImage";
 import { categories, menuItems, dietaryLabels, type DietaryTag } from "@/lib/menu-data";
 import { AddToCartButton } from "@/components/AddToCartButton";
 

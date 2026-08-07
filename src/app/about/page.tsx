@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { AppImage as Image } from "@/components/AppImage";
 import { ArrowButton } from "@/components/ArrowButton";
 
 export const metadata: Metadata = {
