@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowButton } from "@/components/ArrowButton";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { BranchDoodle } from "@/components/BranchDoodle";
 import { CupIcon } from "@/components/CupIcon";
 import { TestimonialCarousel } from "@/components/TestimonialCarousel";
 import { menuItems } from "@/lib/menu-data";
@@ -53,7 +54,24 @@ export default function HomePage() {
     <>
       {/* Hero */}
       <section className="relative overflow-hidden px-4 pb-8 pt-10 md:px-8 md:pt-16">
-        <div className="mx-auto max-w-4xl text-center">
+        {/* Decorative watermark swirl behind the headline */}
+        <svg
+          viewBox="0 0 700 700"
+          className="pointer-events-none absolute left-1/2 top-0 h-[640px] w-[640px] -translate-x-1/2 text-espresso/[0.07] md:h-[760px] md:w-[760px]"
+          aria-hidden="true"
+        >
+          <path
+            d="M350 60c150 0 260 110 260 250s-120 250-270 250c-110 0-190-60-190-145 0-70 60-120 130-120 55 0 95 35 95 85 0 35-27 60-60 60"
+            stroke="currentColor"
+            strokeWidth="46"
+            strokeLinecap="round"
+            fill="none"
+          />
+        </svg>
+        <BranchDoodle className="pointer-events-none absolute -left-6 top-6 hidden h-40 w-40 text-espresso/10 sm:block" />
+        <BranchDoodle className="pointer-events-none absolute -right-6 bottom-0 hidden h-40 w-40 rotate-180 text-espresso/10 sm:block" />
+
+        <div className="relative mx-auto max-w-4xl text-center">
           <p className="font-display text-sm font-bold uppercase tracking-[0.25em] text-amber-dark">
             Est. in Accra
           </p>
@@ -66,14 +84,14 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-4xl grid-cols-3 gap-3 md:gap-6">
-          <div className="float-sway relative mt-6 aspect-[3/4] -rotate-6 overflow-hidden rounded-2xl border-4 border-white shadow-xl">
+        <div className="relative mx-auto mt-10 flex max-w-2xl justify-center">
+          <div className="float-sway relative z-20 mt-6 aspect-[4/5] w-[36%] -rotate-6 overflow-hidden rounded-2xl border-4 border-white shadow-xl">
             <Image src="/gallery/hero-latte-wood2.jpg" alt="Latte art on a wooden tray" fill className="object-cover" priority />
           </div>
-          <div className="float-sway relative aspect-[3/4] overflow-hidden rounded-2xl border-4 border-white shadow-xl" style={{ animationDelay: "0.6s" }}>
+          <div className="float-sway relative z-10 aspect-[4/5] w-[36%] -mx-4 overflow-hidden rounded-2xl border-4 border-white shadow-xl" style={{ animationDelay: "0.6s" }}>
             <Image src="/gallery/hero-whipped-choc2.jpg" alt="Whipped-cream coffee drink" fill className="object-cover" priority />
           </div>
-          <div className="float-sway relative mt-6 aspect-[3/4] rotate-6 overflow-hidden rounded-2xl border-4 border-white shadow-xl" style={{ animationDelay: "1.2s" }}>
+          <div className="float-sway relative z-20 mt-6 aspect-[4/5] w-[36%] rotate-6 overflow-hidden rounded-2xl border-4 border-white shadow-xl" style={{ animationDelay: "1.2s" }}>
             <Image src="/gallery/hero-latte-flowers2.jpg" alt="Latte art with dried flowers" fill className="object-cover" />
           </div>
         </div>
