@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { AppImage as Image } from "@/components/AppImage";
-import { categories, menuItems, dietaryLabels, type DietaryTag } from "@/lib/menu-data";
+import { categories, dietaryLabels, type DietaryTag } from "@/lib/menu-data";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { useCart } from "@/components/CartProvider";
 
 const dietaryFilters: DietaryTag[] = ["vegan", "gf", "nuts"];
 
 export default function MenuPage() {
+  const { menuItems } = useCart();
   const [activeCategory, setActiveCategory] = useState<string>("All Menu");
   const [search, setSearch] = useState("");
   const [activeTags, setActiveTags] = useState<Set<DietaryTag>>(new Set());
@@ -79,7 +81,7 @@ export default function MenuPage() {
       {/* Category sub-nav */}
       <div className="sticky top-[65px] z-30 bg-cream/95 py-4 backdrop-blur md:top-[73px]">
         <div className="mx-auto flex max-w-6xl justify-center gap-2 overflow-x-auto px-4 md:px-8">
-          {["All Menu", ...categories].map((cat) => (
+          {["All Menu", ...categories.filter((category) => menuItems.some((item) => item.category === category))].map((cat) => (
             <button
               key={cat}
               type="button"
@@ -113,8 +115,11 @@ export default function MenuPage() {
                   <p className="mt-0.5 font-display text-sm font-bold text-espresso/70">
                     GH₵{item.price}
                   </p>
-                  <div className="relative mx-auto mt-4 h-28 w-28 overflow-hidden rounded-full">
-                    <Image src={item.image} alt={item.name} fill className="object-cover" />
+                  <div className="relative mx-auto mt-4 h-28 w-28">
+                    <div className="h-full w-full overflow-hidden rounded-full">
+                      <Image src={item.image} alt={item.name} fill className="object-cover" />
+                    </div>
+                    <AddToCartButton id={item.id} className="absolute bottom-0 right-0 h-9 w-9" />
                   </div>
                   {item.tags.length > 0 && (
                     <div className="mt-3 flex flex-wrap justify-center gap-1.5">
@@ -128,9 +133,6 @@ export default function MenuPage() {
                       ))}
                     </div>
                   )}
-                  <div className="-mb-2 mt-3 flex justify-center">
-                    <AddToCartButton id={item.id} className="h-9 w-9" />
-                  </div>
                 </div>
               ))}
             </div>

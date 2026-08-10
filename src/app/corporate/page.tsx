@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { ArrowButton } from "@/components/ArrowButton";
+import { api } from "@/lib/api";
 
 const offerings = [
   {
@@ -26,11 +27,33 @@ const budgetOptions = ["Under GH₵1,000", "GH₵1,000 – 3,000", "GH₵3,000 �
 export default function CorporatePage() {
   const [submitted, setSubmitted] = useState(false);
   const [reference, setReference] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setReference(`CS-${Math.floor(1000 + Math.random() * 9000)}`);
-    setSubmitted(true);
+    setError("");
+    setIsSubmitting(true);
+    const form = new FormData(e.currentTarget);
+    try {
+      const inquiry = await api.createCorporateInquiry({
+        fullName: String(form.get("name") ?? ""),
+        companyName: String(form.get("company") ?? ""),
+        email: String(form.get("email") ?? "") || undefined,
+        phone: String(form.get("phone") ?? "") || undefined,
+        serviceNeeded: String(form.get("service")) as "Catering" | "Subscription" | "Venue Rental" | "Bulk Orders",
+        budgetRange: String(form.get("budget") ?? ""),
+        estimatedDate: String(form.get("date") ?? ""),
+        headcount: Number(form.get("headcount")),
+        notes: String(form.get("notes") ?? "") || undefined,
+      });
+      setReference(inquiry.referenceCode);
+      setSubmitted(true);
+    } catch (submissionError) {
+      setError(submissionError instanceof Error ? submissionError.message : "We couldn't send your inquiry. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -100,12 +123,17 @@ export default function CorporatePage() {
                 <Field label="Company Name" name="company" required />
               </div>
               <div className="grid gap-5 sm:grid-cols-2">
+                <Field label="Email" name="email" type="email" />
+                <Field label="Phone" name="phone" type="tel" />
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-semibold text-espresso/80">
                     Service Needed
                   </label>
                   <select
                     required
+                    name="service"
                     className="mt-1.5 w-full rounded-lg border border-espresso/15 bg-cream px-3 py-2.5 text-sm text-espresso focus:border-amber focus:outline-none"
                   >
                     <option value="">Select one…</option>
@@ -120,6 +148,7 @@ export default function CorporatePage() {
                   </label>
                   <select
                     required
+                    name="budget"
                     className="mt-1.5 w-full rounded-lg border border-espresso/15 bg-cream px-3 py-2.5 text-sm text-espresso focus:border-amber focus:outline-none"
                   >
                     <option value="">Select one…</option>
@@ -138,13 +167,15 @@ export default function CorporatePage() {
                   Specific Notes / Dietary Requirements
                 </label>
                 <textarea
+                  name="notes"
                   rows={4}
                   className="mt-1.5 w-full rounded-lg border border-espresso/15 bg-cream px-3 py-2.5 text-sm text-espresso placeholder:text-espresso/35 focus:border-amber focus:outline-none"
                   placeholder="Anything else we should know?"
                 />
               </div>
+              {error && <p className="text-sm text-red-600">{error}</p>}
               <ArrowButton type="submit" variant="amber">
-                Send Inquiry
+                {isSubmitting ? "Sending…" : "Send Inquiry"}
               </ArrowButton>
             </form>
           )}

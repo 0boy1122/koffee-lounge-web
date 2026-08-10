@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderModality {
+  DELIVERY
+  PICKUP
+  DINE_IN
+}
+
+enum OrderStatus {
+  RECEIVED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+enum StaffRole {
+  STAFF
+  ADMIN
+}
+
+model MenuItem {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String
+  price       Decimal     @db.Decimal(10, 2)
+  category    String
+  tags        String[]    @default([])
+  image       String
+  popular     Boolean     @default(false)
+  available   Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id               String              @id @default(cuid())
+  orderNumber      String              @unique
+  trackingTokenHash String?            @unique
+  customerName     String?
+  customerPhone    String?
+  customerEmail    String?
+  modality         OrderModality
+  deliveryAddress  String?
+  tableNumber      String?
+  status           OrderStatus         @default(RECEIVED)
+  subtotal         Decimal             @db.Decimal(10, 2)
+  discountRate     Decimal             @default(0) @db.Decimal(4, 3)
+  total            Decimal             @db.Decimal(10, 2)
+  promoCode        String?
+  paymentStatus    PaymentStatus       @default(PENDING)
+  items            OrderItem[]
+  statusEvents     OrderStatusEvent[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId       String
+  menuItem      MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItemId    String
+  nameSnapshot  String
+  priceSnapshot Decimal  @db.Decimal(10, 2)
+  quantity      Int
+}
+
+model OrderStatusEvent {
+  id        String      @id @default(cuid())
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+}
+
+model PromoCode {
+  id           String    @id @default(cuid())
+  code         String    @unique
+  discountRate Decimal   @db.Decimal(4, 3)
+  active       Boolean   @default(true)
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+model CorporateInquiry {
+  id            String        @id @default(cuid())
+  referenceCode String        @unique
+  fullName      String
+  companyName   String
+  email         String?
+  phone         String?
+  serviceNeeded String
+  budgetRange   String
+  estimatedDate DateTime
+  headcount     Int
+  notes         String?
+  status        InquiryStatus @default(NEW)
+  createdAt     DateTime      @default(now())
+}
+
+model StaffUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         StaffRole @default(STAFF)
+  createdAt    DateTime  @default(now())
+}

@@ -1,14 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { ArrowButton } from "@/components/ArrowButton";
 import { CupIcon } from "@/components/CupIcon";
+import { api } from "@/lib/api";
 
 type Modality = "delivery" | "pickup" | "dine-in";
 type Step = "cart" | "modality" | "tracking";
 type OrderStage = "received" | "preparing" | "final";
+type CheckoutDetails = {
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  deliveryAddress?: string;
+  tableNumber?: string;
+};
 
 const STAGE_LABELS: Record<Modality, string> = {
   delivery: "Out for Delivery",
@@ -26,26 +34,50 @@ export default function OrderPage() {
   const [leadEmail, setLeadEmail] = useState("");
   const [leadApplied, setLeadApplied] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
+  const [orderId, setOrderId] = useState("");
+  const [trackingToken, setTrackingToken] = useState("");
   const [stage, setStage] = useState<OrderStage>("received");
+  const [checkoutError, setCheckoutError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Mock a real-time status tracker advancing on its own, since there's no
-  // backend/POS behind this prototype yet.
   useEffect(() => {
-    if (step !== "tracking") return;
-    const t1 = window.setTimeout(() => setStage("preparing"), 3000);
-    const t2 = window.setTimeout(() => setStage("final"), 7000);
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+    if (step !== "tracking" || !orderId || !trackingToken) return;
+    const syncStatus = async () => {
+      try {
+        const order = await api.getOrder(orderId, trackingToken);
+        setStage(order.status === "RECEIVED" ? "received" : order.status === "PREPARING" ? "preparing" : "final");
+      } catch {
+        // Keep the most recently known state while a request is retried.
+      }
     };
-  }, [step]);
+    void syncStatus();
+    const interval = window.setInterval(() => void syncStatus(), 5000);
+    return () => window.clearInterval(interval);
+  }, [step, orderId, trackingToken]);
 
-  const startCheckout = (m: Modality) => {
-    setModality(m);
-    setOrderNumber(`KL-${Math.floor(1000 + Math.random() * 9000)}`);
-    setStage("received");
-    setStep("tracking");
-    clear();
+  const startCheckout = async (m: Modality, details: CheckoutDetails) => {
+    setCheckoutError("");
+    setIsSubmitting(true);
+    try {
+      const order = await api.createOrder({
+        items: lines.map(({ item, qty }) => ({ menuItemId: item.id, quantity: qty })),
+        modality: m === "delivery" ? "DELIVERY" : m === "pickup" ? "PICKUP" : "DINE_IN",
+        promoCode: promoCode || undefined,
+        ...details,
+      });
+      if (!order.trackingToken) throw new Error("We couldn't start secure order tracking. Please try again.");
+      setOrderId(order.id);
+      setTrackingToken(order.trackingToken);
+      setOrderNumber(order.orderNumber);
+      setStage("received");
+      setModality(m);
+      setStep("tracking");
+      clear();
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : "We couldn't place your order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (step === "tracking" && modality) {
@@ -85,7 +117,7 @@ export default function OrderPage() {
                   onSubmit={(e) => {
                     e.preventDefault();
                     if (!leadEmail.trim()) return;
-                    applyPromo("FIRST15");
+                    void applyPromo("FIRST15");
                     setPromoInput("FIRST15");
                     setLeadApplied(true);
                   }}
@@ -151,7 +183,7 @@ export default function OrderPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                applyPromo(promoInput);
+                void applyPromo(promoInput);
               }}
               className="mt-4 flex gap-2"
             >
@@ -201,7 +233,7 @@ export default function OrderPage() {
       </div>
 
       {step === "modality" && (
-        <ModalityModal onSelect={startCheckout} onClose={() => setStep("cart")} />
+        <ModalityModal onSelect={startCheckout} onClose={() => setStep("cart")} isSubmitting={isSubmitting} error={checkoutError} />
       )}
     </section>
   );
@@ -210,10 +242,28 @@ export default function OrderPage() {
 function ModalityModal({
   onSelect,
   onClose,
+  isSubmitting,
+  error,
 }: {
-  onSelect: (m: Modality) => void;
+  onSelect: (m: Modality, details: CheckoutDetails) => void | Promise<void>;
   onClose: () => void;
+  isSubmitting: boolean;
+  error: string;
 }) {
+  const [selectedModality, setSelectedModality] = useState<Modality | null>(null);
+  const submitDetails = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedModality) return;
+    const form = new FormData(event.currentTarget);
+    void onSelect(selectedModality, {
+      customerName: String(form.get("customerName") ?? ""),
+      customerEmail: String(form.get("customerEmail") ?? "") || undefined,
+      customerPhone: String(form.get("customerPhone") ?? "") || undefined,
+      deliveryAddress: String(form.get("deliveryAddress") ?? "") || undefined,
+      tableNumber: String(form.get("tableNumber") ?? "") || undefined,
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-espresso/60 backdrop-blur-sm sm:items-center">
       <div className="w-full max-w-md rounded-t-2xl bg-cream p-6 sm:rounded-2xl">
@@ -231,19 +281,39 @@ function ModalityModal({
           <ModalityOption
             title="Delivery"
             detail="Enter your address — we'll check the delivery radius."
-            onClick={() => onSelect("delivery")}
+            onClick={() => setSelectedModality("delivery")}
+            disabled={isSubmitting}
           />
           <ModalityOption
             title="Pick Up / Takeaway"
             detail="Choose a pick-up time slot at the counter."
-            onClick={() => onSelect("pickup")}
+            onClick={() => setSelectedModality("pickup")}
+            disabled={isSubmitting}
           />
           <ModalityOption
             title="Dine-In / Table Order"
             detail="Scan the table QR code, or tell us your table number."
-            onClick={() => onSelect("dine-in")}
+            onClick={() => setSelectedModality("dine-in")}
+            disabled={isSubmitting}
           />
         </div>
+        {selectedModality && (
+          <form onSubmit={submitDetails} className="mt-5 space-y-3 border-t border-espresso/10 pt-5">
+            <input name="customerName" required placeholder="Your name" className="w-full rounded-lg border border-espresso/15 bg-white px-3 py-2 text-sm" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <input name="customerEmail" type="email" placeholder="Email address" className="w-full rounded-lg border border-espresso/15 bg-white px-3 py-2 text-sm" />
+              <input name="customerPhone" type="tel" placeholder="Phone number" className="w-full rounded-lg border border-espresso/15 bg-white px-3 py-2 text-sm" />
+            </div>
+            {selectedModality === "delivery" && <input name="deliveryAddress" required placeholder="Delivery address" className="w-full rounded-lg border border-espresso/15 bg-white px-3 py-2 text-sm" />}
+            {selectedModality === "dine-in" && <input name="tableNumber" required placeholder="Table number" className="w-full rounded-lg border border-espresso/15 bg-white px-3 py-2 text-sm" />}
+            <button disabled={isSubmitting} className="w-full rounded-full bg-amber px-4 py-2.5 text-sm font-bold text-espresso-deep disabled:opacity-60">
+              {isSubmitting ? "Placing order…" : "Place order"}
+            </button>
+            <p className="text-xs text-espresso/50">Add at least an email address or phone number.</p>
+          </form>
+        )}
+        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {isSubmitting && <p className="mt-4 text-sm text-espresso/60">Placing your order…</p>}
       </div>
     </div>
   );
@@ -253,16 +323,19 @@ function ModalityOption({
   title,
   detail,
   onClick,
+  disabled,
 }: {
   title: string;
   detail: string;
-  onClick: () => void;
+  onClick: () => void | Promise<void>;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-xl bg-white p-4 text-left shadow-sm transition-colors hover:ring-2 hover:ring-amber"
+      disabled={disabled}
+      className="w-full rounded-xl bg-white p-4 text-left shadow-sm transition-colors hover:ring-2 hover:ring-amber disabled:cursor-not-allowed disabled:opacity-60"
     >
       <p className="font-display text-base font-bold text-espresso">{title}</p>
       <p className="mt-0.5 text-xs text-espresso/50">{detail}</p>

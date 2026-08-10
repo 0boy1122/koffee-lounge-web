@@ -20,6 +20,22 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view it.
 
+## Local API
+
+The checkout, promo-code, and corporate inquiry flows use the Express API in
+`../server`. In a second terminal, run:
+
+```bash
+cd ../server
+npm install
+npm run setup-db
+npm run dev
+```
+
+The frontend uses `http://localhost:4000` by default. For another deployment,
+copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_API_URL` before
+building the static site.
+
 ## Build (static export)
 
 This project is configured for static export (`output: "export"`) so it can

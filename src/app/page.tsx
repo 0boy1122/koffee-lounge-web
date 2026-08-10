@@ -179,11 +179,11 @@ export default function HomePage() {
                 <p className="mt-3 font-display text-2xl font-bold text-espresso">{f.name}</p>
                 <p className="mt-1 text-sm text-espresso/60">{f.detail}</p>
                 <p className="mt-3 font-display text-xl font-bold text-espresso">{f.price}</p>
-                <div className="relative mx-auto mt-4 h-40 w-40 overflow-hidden rounded-full border-4 border-cream shadow-inner">
-                  <Image src={f.image} alt={f.name} fill className="object-cover" />
-                </div>
-                <div className="-mt-5 flex justify-center">
-                  <AddToCartButton id={f.id} />
+                <div className="relative mx-auto mt-4 h-40 w-40">
+                  <div className="h-full w-full overflow-hidden rounded-full border-4 border-cream shadow-inner">
+                    <Image src={f.image} alt={f.name} fill className="object-cover" />
+                  </div>
+                  <AddToCartButton id={f.id} className="absolute bottom-0 right-1" />
                 </div>
               </div>
             ))}
@@ -261,15 +261,13 @@ export default function HomePage() {
               <div key={item.id} className="rounded-2xl bg-white p-4 shadow-sm">
                 <div className="relative aspect-square overflow-hidden rounded-xl">
                   <Image src={item.image} alt={item.name} fill className="object-cover" />
+                  <AddToCartButton id={item.id} className="absolute bottom-2 right-2 h-9 w-9" />
                 </div>
                 <div className="mt-3 flex items-start justify-between gap-2">
                   <p className="font-display text-sm font-bold text-espresso">{item.name}</p>
                   <span className="flex-shrink-0 font-display text-sm font-bold text-amber-dark">
                     GH₵{item.price}
                   </span>
-                </div>
-                <div className="mt-3 flex justify-end">
-                  <AddToCartButton id={item.id} className="h-9 w-9" />
                 </div>
               </div>
             ))}
@@ -286,7 +284,7 @@ export default function HomePage() {
           </div>
           <div>
             <h2 className="font-display text-4xl font-extrabold leading-tight md:text-5xl">
-              Coffee Cravings? We&apos;ve Got You Covered
+              Koffee Cravings? We&apos;ve Got You Covered
             </h2>
             <p className="mt-4 max-w-md text-cream/70">
               Order your favorite drinks and treats for quick delivery within

@@ -1,0 +1,6 @@
+node_modules
+dist
+.env
+.pg-data
+*.log
+prisma/seed.js

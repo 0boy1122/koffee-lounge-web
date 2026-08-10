@@ -4,23 +4,21 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 import { menuItems, type MenuItem } from "@/lib/menu-data";
+import { api } from "@/lib/api";
 
 export interface CartLine {
   item: MenuItem;
   qty: number;
 }
 
-const PROMO_CODES: Record<string, number> = {
-  FIRST15: 0.15,
-  OFFICE10: 0.1,
-};
-
 interface CartContextValue {
+  menuItems: MenuItem[];
   lines: CartLine[];
   addItem: (id: string) => void;
   removeItem: (id: string) => void;
@@ -31,7 +29,7 @@ interface CartContextValue {
   promoCode: string;
   promoError: string;
   discountRate: number;
-  applyPromo: (code: string) => void;
+  applyPromo: (code: string) => Promise<void>;
   total: number;
 }
 
@@ -39,23 +37,41 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
+  const [availableMenuItems, setAvailableMenuItems] = useState<MenuItem[]>(menuItems);
   const [promoCode, setPromoCode] = useState("");
   const [discountRate, setDiscountRate] = useState(0);
   const [promoError, setPromoError] = useState("");
 
-  const addItem = useCallback((id: string) => {
-    setLines((prev) => {
-      const existing = prev.find((l) => l.item.id === id);
-      if (existing) {
-        return prev.map((l) =>
-          l.item.id === id ? { ...l, qty: l.qty + 1 } : l
-        );
-      }
-      const item = menuItems.find((m) => m.id === id);
-      if (!item) return prev;
-      return [...prev, { item, qty: 1 }];
+  useEffect(() => {
+    void api.getMenu().then((items) => {
+      setAvailableMenuItems(items.map((item) => ({
+        ...item,
+        price: Number(item.price),
+        tags: item.tags.filter((tag): tag is MenuItem["tags"][number] =>
+          tag === "vegan" || tag === "gf" || tag === "nuts"
+        ),
+      })));
+    }).catch(() => {
+      // Preserve the local catalogue when the API is offline.
     });
   }, []);
+
+  const addItem = useCallback((id: string) => {
+    const fallbackItem = menuItems.find((item) => item.id === id);
+    const item = availableMenuItems.find((candidate) => candidate.id === id)
+      ?? availableMenuItems.find((candidate) => candidate.name === fallbackItem?.name);
+    if (!item) return;
+
+    setLines((prev) => {
+      const existing = prev.find((line) => line.item.id === item.id);
+      if (existing) {
+        return prev.map((l) =>
+          l.item.id === item.id ? { ...l, qty: l.qty + 1 } : l
+        );
+      }
+      return [...prev, { item, qty: 1 }];
+    });
+  }, [availableMenuItems]);
 
   const removeItem = useCallback((id: string) => {
     setLines((prev) => prev.filter((l) => l.item.id !== id));
@@ -75,7 +91,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setPromoError("");
   }, []);
 
-  const applyPromo = useCallback((code: string) => {
+  const applyPromo = useCallback(async (code: string) => {
     const normalized = code.trim().toUpperCase();
     setPromoCode(normalized);
     if (!normalized) {
@@ -83,13 +99,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setPromoError("");
       return;
     }
-    const rate = PROMO_CODES[normalized];
-    if (rate) {
-      setDiscountRate(rate);
+    try {
+      const promo = await api.validatePromo(normalized);
+      setPromoCode(promo.code);
+      setDiscountRate(promo.discountRate);
       setPromoError("");
-    } else {
+    } catch (error) {
       setDiscountRate(0);
-      setPromoError("That code doesn't exist or has expired.");
+      setPromoError(error instanceof Error ? error.message : "That code doesn't exist or has expired.");
     }
   }, []);
 
@@ -107,6 +124,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const value: CartContextValue = {
+    menuItems: availableMenuItems,
     lines,
     addItem,
     removeItem,
