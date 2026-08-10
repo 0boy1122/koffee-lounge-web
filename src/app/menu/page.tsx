@@ -119,10 +119,10 @@ export default function MenuPage() {
                     <div className="h-full w-full overflow-hidden rounded-full">
                       <Image src={item.image} alt={item.name} fill className="object-cover" />
                     </div>
-                    <AddToCartButton id={item.id} className="absolute bottom-0 right-0 h-9 w-9" />
+                    <AddToCartButton id={item.id} className="absolute -bottom-4 left-1/2 -translate-x-1/2 h-9 w-9" />
                   </div>
                   {item.tags.length > 0 && (
-                    <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                    <div className="mt-5 flex flex-wrap justify-center gap-1.5">
                       {item.tags.map((tag) => (
                         <span
                           key={tag}

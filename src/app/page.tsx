@@ -183,7 +183,7 @@ export default function HomePage() {
                   <div className="h-full w-full overflow-hidden rounded-full border-4 border-cream shadow-inner">
                     <Image src={f.image} alt={f.name} fill className="object-cover" />
                   </div>
-                  <AddToCartButton id={f.id} className="absolute bottom-0 right-1" />
+                  <AddToCartButton id={f.id} className="absolute -bottom-4 left-1/2 -translate-x-1/2" />
                 </div>
               </div>
             ))}
@@ -261,9 +261,9 @@ export default function HomePage() {
               <div key={item.id} className="rounded-2xl bg-white p-4 shadow-sm">
                 <div className="relative aspect-square overflow-hidden rounded-xl">
                   <Image src={item.image} alt={item.name} fill className="object-cover" />
-                  <AddToCartButton id={item.id} className="absolute bottom-2 right-2 h-9 w-9" />
+                  <AddToCartButton id={item.id} className="absolute -bottom-4 left-1/2 -translate-x-1/2 h-9 w-9" />
                 </div>
-                <div className="mt-3 flex items-start justify-between gap-2">
+                <div className="mt-5 flex items-start justify-between gap-2">
                   <p className="font-display text-sm font-bold text-espresso">{item.name}</p>
                   <span className="flex-shrink-0 font-display text-sm font-bold text-amber-dark">
                     GH₵{item.price}
