@@ -3,8 +3,8 @@ self.__BUILD_MANIFEST = {
     "afterFiles": [],
     "beforeFiles": [
       {
-        "source": "/Koffee-Lounge-//_next/:path+",
-        "destination": "/Koffee-Lounge-/_next/:path+"
+        "source": "/koffee-lounge-web//_next/:path+",
+        "destination": "/koffee-lounge-web/_next/:path+"
       }
     ],
     "fallback": []
