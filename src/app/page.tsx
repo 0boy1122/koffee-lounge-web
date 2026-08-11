@@ -258,9 +258,11 @@ export default function HomePage() {
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {popular.map((item) => (
-              <div key={item.id} className="rounded-2xl bg-white p-4 shadow-sm">
-                <div className="relative aspect-square overflow-hidden rounded-xl">
-                  <Image src={item.image} alt={item.name} fill className="object-cover" />
+              <div key={item.id} className="rounded-2xl bg-white p-4 text-center shadow-sm">
+                <div className="relative mx-auto aspect-square w-28">
+                  <div className="h-full w-full overflow-hidden rounded-full">
+                    <Image src={item.image} alt={item.name} fill className="object-cover" />
+                  </div>
                   <AddToCartButton id={item.id} className="absolute -bottom-4 left-1/2 -translate-x-1/2 h-9 w-9" />
                 </div>
                 <div className="mt-5 flex items-start justify-between gap-2">
