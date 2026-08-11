@@ -18,6 +18,10 @@ async function getPostgres(): Promise<any> {
     password: DB_PASSWORD,
     port: DB_PORT,
     persistent: true,
+    // Without this, `initdb` defaults to the OS codepage on Windows
+    // (WIN1252), which can't store the Cedi sign (₵) or other non-Latin1
+    // text and breaks any insert containing it.
+    initdbFlags: ["--encoding=UTF8", "--locale=C"],
   });
   return pg;
 }

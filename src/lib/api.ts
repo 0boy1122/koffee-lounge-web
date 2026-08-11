@@ -9,14 +9,68 @@ export type ApiMenuItem = {
   tags: string[];
   image: string;
   popular?: boolean;
+  available?: boolean;
 };
 
-type ApiOrder = {
+export type OrderStatus = "RECEIVED" | "PREPARING" | "READY" | "OUT_FOR_DELIVERY" | "COMPLETED" | "CANCELLED";
+export type OrderModality = "DELIVERY" | "PICKUP" | "DINE_IN";
+export type InquiryStatus = "NEW" | "CONTACTED" | "CLOSED";
+
+export type ApiOrderItem = {
+  id: string;
+  nameSnapshot: string;
+  priceSnapshot: number | string;
+  quantity: number;
+};
+
+export type ApiOrder = {
   id: string;
   orderNumber: string;
   trackingToken?: string;
-  status: "RECEIVED" | "PREPARING" | "READY" | "OUT_FOR_DELIVERY" | "COMPLETED" | "CANCELLED";
-  modality: "DELIVERY" | "PICKUP" | "DINE_IN";
+  status: OrderStatus;
+  modality: OrderModality;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  customerEmail?: string | null;
+  deliveryAddress?: string | null;
+  tableNumber?: string | null;
+  subtotal: number | string;
+  discountRate: number | string;
+  total: number | string;
+  promoCode?: string | null;
+  items: ApiOrderItem[];
+  createdAt: string;
+};
+
+export type ApiCorporateInquiry = {
+  id: string;
+  referenceCode: string;
+  fullName: string;
+  companyName: string;
+  email?: string | null;
+  phone?: string | null;
+  serviceNeeded: string;
+  budgetRange: string;
+  estimatedDate: string;
+  headcount: number;
+  notes?: string | null;
+  status: InquiryStatus;
+  createdAt: string;
+};
+
+export type SalesSummary = {
+  totalRevenue: number;
+  totalOrders: number;
+  revenueToday: number;
+  ordersToday: number;
+  ordersByStatus: Partial<Record<OrderStatus, number>>;
+};
+
+export type StaffUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "STAFF" | "ADMIN";
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -39,7 +93,7 @@ export const api = {
     }),
   createOrder: (data: {
     items: { menuItemId: string; quantity: number }[];
-    modality: ApiOrder["modality"];
+    modality: OrderModality;
     promoCode?: string;
     customerName: string;
     customerEmail?: string;
@@ -63,4 +117,21 @@ export const api = {
     method: "POST",
     body: JSON.stringify(data),
   }),
+
+  // Staff / admin
+  staffLogin: (email: string, password: string) =>
+    request<StaffUser>("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
+  staffLogout: () => request<void>("/api/auth/logout", { method: "POST" }),
+  staffMe: () => request<StaffUser>("/api/auth/me"),
+  getSalesSummary: () => request<SalesSummary>("/api/orders/summary"),
+  getStaffOrders: (status?: OrderStatus) =>
+    request<ApiOrder[]>(`/api/orders${status ? `?status=${status}` : ""}`),
+  updateOrderStatus: (id: string, status: OrderStatus) =>
+    request<ApiOrder>(`/api/orders/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  getStaffInquiries: () => request<ApiCorporateInquiry[]>("/api/corporate-inquiries"),
+  updateInquiryStatus: (id: string, status: InquiryStatus) =>
+    request<ApiCorporateInquiry>(`/api/corporate-inquiries/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
 };

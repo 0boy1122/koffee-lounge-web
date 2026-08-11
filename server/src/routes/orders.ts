@@ -121,25 +121,8 @@ ordersRouter.post("/", orderLimiter, async (req, res) => {
   res.status(201).json({ ...order, trackingToken });
 });
 
-ordersRouter.get("/:id", async (req, res) => {
-  const trackingToken = typeof req.query.token === "string" ? req.query.token : "";
-  if (!trackingToken) {
-    res.status(401).json({ error: "A tracking token is required." });
-    return;
-  }
-  const order = await prisma.order.findUnique({
-    where: { id: String(req.params.id), trackingTokenHash: hashTrackingToken(trackingToken) },
-    include: { items: true, statusEvents: { orderBy: { createdAt: "asc" } } },
-  });
-  if (!order) {
-    res.status(404).json({ error: "Order not found." });
-    return;
-  }
-  res.json(order);
-});
-
-// Staff: sales tracking. Must be registered before "/:id" so "summary"
-// isn't swallowed by the order-lookup route.
+// Staff: sales tracking. Registered before "/:id" so "summary" isn't
+// swallowed by the order-lookup route below (Express matches in order).
 ordersRouter.get("/summary", requireStaff, async (_req, res) => {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -170,6 +153,23 @@ ordersRouter.get("/summary", requireStaff, async (_req, res) => {
     ordersToday: today._count,
     ordersByStatus: Object.fromEntries(byStatus.map((row) => [row.status, row._count])),
   });
+});
+
+ordersRouter.get("/:id", async (req, res) => {
+  const trackingToken = typeof req.query.token === "string" ? req.query.token : "";
+  if (!trackingToken) {
+    res.status(401).json({ error: "A tracking token is required." });
+    return;
+  }
+  const order = await prisma.order.findUnique({
+    where: { id: String(req.params.id), trackingTokenHash: hashTrackingToken(trackingToken) },
+    include: { items: true, statusEvents: { orderBy: { createdAt: "asc" } } },
+  });
+  if (!order) {
+    res.status(404).json({ error: "Order not found." });
+    return;
+  }
+  res.json(order);
 });
 
 // Staff: list + manage orders

@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import { Baloo_2, Nunito, Caveat } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/components/CartProvider";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
-import { StickyActionBar } from "@/components/StickyActionBar";
 
 const baloo = Baloo_2({
   variable: "--font-display",
@@ -37,12 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${baloo.variable} ${nunito.variable} ${caveat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-cream text-espresso font-body">
-        <CartProvider>
-          <SiteHeader />
-          <main className="flex-1 pb-24 md:pb-0">{children}</main>
-          <SiteFooter />
-          <StickyActionBar />
-        </CartProvider>
+        <CartProvider>{children}</CartProvider>
       </body>
     </html>
   );
